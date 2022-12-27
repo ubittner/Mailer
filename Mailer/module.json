@@ -1,0 +1,14 @@
+{
+    "id": "{C6CF3C5C-E97B-97AB-ADA2-E834976C6A92}",
+    "name": "Mailer",
+    "type": 3,
+    "vendor": "UB",
+    "aliases": [
+        "Mailer"
+    ],
+    "url": "https://github.com/ubittner/Mailer/tree/main/Mailer",
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "MA"
+}

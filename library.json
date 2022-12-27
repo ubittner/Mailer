@@ -1,0 +1,12 @@
+{
+    "id": "{9B229E71-4D0F-E386-330F-1AC86B01BE18}",
+    "name": "Mailer",
+    "author": "Ulrich Bittner",
+    "url": "https://github.com/ubittner/Mailer",
+    "compatibility": {
+        "version": "6.1"
+    },
+    "version": "7.0",
+    "build": 1,
+    "date": 1662617816
+}
