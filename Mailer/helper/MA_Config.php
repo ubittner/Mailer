@@ -119,19 +119,6 @@ trait MA_Config
             ]
         ];
 
-        //Functions
-        $form['elements'][] = [
-            'type'    => 'ExpansionPanel',
-            'caption' => 'Funktionen',
-            'items'   => [
-                [
-                    'type'    => 'CheckBox',
-                    'name'    => 'EnableActive',
-                    'caption' => 'Aktiv (Schalter im WebFront)'
-                ]
-            ]
-        ];
-
         //SMTP
         $id = $this->ReadPropertyInteger('SMTP');
         $enabled = false;
@@ -229,6 +216,30 @@ trait MA_Config
                         ]
                     ],
                     'values' => $recipientValues
+                ]
+            ]
+        ];
+
+        //Visualisation
+        $form['elements'][] = [
+            'type'    => 'ExpansionPanel',
+            'caption' => 'Visualisierung',
+            'items'   => [
+                [
+                    'type'    => 'Label',
+                    'caption' => 'WebFront',
+                    'bold'    => true,
+                    'italic'  => true
+                ],
+                [
+                    'type'    => 'Label',
+                    'caption' => 'Anzeigeoptionen',
+                    'italic'  => true
+                ],
+                [
+                    'type'    => 'CheckBox',
+                    'name'    => 'EnableActive',
+                    'caption' => 'Aktiv'
                 ]
             ]
         ];
