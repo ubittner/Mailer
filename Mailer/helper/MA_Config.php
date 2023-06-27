@@ -25,6 +25,22 @@ trait MA_Config
     }
 
     /**
+     * Expands or collapses the expansion panels.
+     *
+     * @param bool $State
+     * false =  collapse,
+     * true =   expand
+     *
+     * @return void
+     */
+    public function ExpandExpansionPanels(bool $State): void
+    {
+        for ($i = 1; $i <= 4; $i++) {
+            $this->UpdateFormField('Panel' . $i, 'expanded', $State);
+        }
+    }
+
+    /**
      * Modifies a configuration button.
      *
      * @param string $Field
@@ -35,7 +51,7 @@ trait MA_Config
     public function ModifyButton(string $Field, string $Caption, int $ObjectID): void
     {
         $state = false;
-        if ($ObjectID > 1 && @IPS_ObjectExists($ObjectID)) { //0 = main category, 1 = none
+        if ($ObjectID > 1 && @IPS_ObjectExists($ObjectID)) {
             $state = true;
         }
         $this->UpdateFormField($Field, 'caption', $Caption);
@@ -59,7 +75,7 @@ trait MA_Config
         if (array_key_exists(0, $primaryCondition)) {
             if (array_key_exists(0, $primaryCondition[0]['rules']['variable'])) {
                 $id = $primaryCondition[0]['rules']['variable'][0]['variableID'];
-                if ($id > 1 && @IPS_ObjectExists($id)) { //0 = main category, 1 = none
+                if ($id > 1 && @IPS_ObjectExists($id)) {
                     $state = true;
                 }
             }
@@ -81,9 +97,35 @@ trait MA_Config
 
         ########## Elements
 
+        //Configuration buttons
+        $form['elements'][0] =
+            [
+                'type'  => 'RowLayout',
+                'items' => [
+                    [
+                        'type'    => 'Button',
+                        'caption' => 'Konfiguration ausklappen',
+                        'onClick' => self::MODULE_PREFIX . '_ExpandExpansionPanels($id, true);'
+                    ],
+                    [
+                        'type'    => 'Button',
+                        'caption' => 'Konfiguration einklappen',
+                        'onClick' => self::MODULE_PREFIX . '_ExpandExpansionPanels($id, false);'
+                    ],
+                    [
+                        'type'    => 'Button',
+                        'caption' => 'Konfiguration neu laden',
+                        'onClick' => self::MODULE_PREFIX . '_ReloadConfig($id);'
+                    ]
+                ]
+            ];
+
         //Info
-        $form['elements'][0] = [
+        $library = IPS_GetLibrary(self::LIBRARY_GUID);
+        $module = IPS_GetModule(self::MODULE_GUID);
+        $form['elements'][] = [
             'type'    => 'ExpansionPanel',
+            'name'    => 'Panel1',
             'caption' => 'Info',
             'items'   => [
                 [
@@ -93,18 +135,19 @@ trait MA_Config
                 ],
                 [
                     'type'    => 'Label',
-                    'name'    => 'ModuleDesignation',
-                    'caption' => "Modul:\t\t" . self::MODULE_NAME
+                    'caption' => "Modul:\t\t" . $module['ModuleName']
                 ],
                 [
                     'type'    => 'Label',
-                    'name'    => 'ModulePrefix',
-                    'caption' => "Präfix:\t\t" . self::MODULE_PREFIX
+                    'caption' => "Präfix:\t\t" . $module['Prefix']
                 ],
                 [
                     'type'    => 'Label',
-                    'name'    => 'ModuleVersion',
-                    'caption' => "Version:\t\t" . self::MODULE_VERSION
+                    'caption' => "Version:\t\t" . $library['Version'] . '-' . $library['Build'] . ', ' . date('d.m.Y', $library['Date'])
+                ],
+                [
+                    'type'    => 'Label',
+                    'caption' => "Entwickler:\t" . $library['Author']
                 ],
                 [
                     'type'    => 'Label',
@@ -122,11 +165,12 @@ trait MA_Config
         //SMTP
         $id = $this->ReadPropertyInteger('SMTP');
         $enabled = false;
-        if ($id > 1 && @IPS_ObjectExists($id)) { //0 = main category, 1 = none
+        if ($id > 1 && @IPS_ObjectExists($id)) {
             $enabled = true;
         }
         $form['elements'][] = [
             'type'    => 'ExpansionPanel',
+            'name'    => 'Panel2',
             'caption' => 'SMTP',
             'items'   => [
                 [
@@ -138,23 +182,19 @@ trait MA_Config
                             'caption'  => 'Instanz',
                             'moduleID' => self::SMTP_MODULE_GUID,
                             'width'    => '600px',
-                            'onChange' => self::MODULE_PREFIX . '_ModifyButton($id, "SMTPConfigurationButton", "ID " . $SMTP . " Instanzkonfiguration", $SMTP);'
+                            'onChange' => self::MODULE_PREFIX . '_ModifyButton($id, "SMTPConfigurationButton", "ID " . $SMTP . " konfigurieren", $SMTP);'
+                        ],
+                        [
+                            'type'     => 'OpenObjectButton',
+                            'caption'  => 'ID ' . $id . ' konfigurieren',
+                            'name'     => 'SMTPConfigurationButton',
+                            'visible'  => $enabled,
+                            'objectID' => $id
                         ],
                         [
                             'type'    => 'Button',
                             'caption' => 'Neue Instanz erstellen',
                             'onClick' => self::MODULE_PREFIX . '_CreateSMTPInstance($id);'
-                        ],
-                        [
-                            'type'    => 'Label',
-                            'caption' => ' '
-                        ],
-                        [
-                            'type'     => 'OpenObjectButton',
-                            'caption'  => 'ID ' . $id . ' Instanzkonfiguration',
-                            'name'     => 'SMTPConfigurationButton',
-                            'visible'  => $enabled,
-                            'objectID' => $id
                         ]
                     ]
                 ]
@@ -178,11 +218,13 @@ trait MA_Config
 
         $form['elements'][] = [
             'type'    => 'ExpansionPanel',
+            'name'    => 'Panel3',
             'caption' => 'Empfänger',
             'items'   => [
                 [
                     'type'     => 'List',
                     'name'     => 'RecipientList',
+                    'caption'  => 'Empfänger',
                     'rowCount' => 5,
                     'add'      => true,
                     'delete'   => true,
@@ -223,19 +265,9 @@ trait MA_Config
         //Visualisation
         $form['elements'][] = [
             'type'    => 'ExpansionPanel',
+            'name'    => 'Panel4',
             'caption' => 'Visualisierung',
             'items'   => [
-                [
-                    'type'    => 'Label',
-                    'caption' => 'WebFront',
-                    'bold'    => true,
-                    'italic'  => true
-                ],
-                [
-                    'type'    => 'Label',
-                    'caption' => 'Anzeigeoptionen',
-                    'italic'  => true
-                ],
                 [
                     'type'    => 'CheckBox',
                     'name'    => 'EnableActive',
@@ -246,28 +278,44 @@ trait MA_Config
 
         ########## Actions
 
+        //Send message
         $form['actions'][] = [
-            'type'    => 'ExpansionPanel',
-            'caption' => 'Konfiguration',
-            'items'   => [
-                [
-                    'type'    => 'Button',
-                    'caption' => 'Neu laden',
-                    'onClick' => self::MODULE_PREFIX . '_ReloadConfig($id);'
-                ]
-            ]
+            'type'    => 'ValidationTextBox',
+            'name'    => 'Subject',
+            'caption' => 'Betreff',
+            'width'   => '600px'
+        ];
+
+        $form['actions'][] = [
+            'type'      => 'ValidationTextBox',
+            'name'      => 'Text',
+            'caption'   => 'Nachricht',
+            'width'     => '600px',
+            'multiline' => true
+        ];
+
+        $form['actions'][] = [
+            'type'    => 'Button',
+            'caption' => 'Nachricht senden',
+            'onClick' => self::MODULE_PREFIX . '_SendMessage($id, $Subject, $Text);' . self::MODULE_PREFIX . '_UIShowMessage($id, "Die Nachricht wurde versendet!");'
+        ];
+
+        $form['actions'][] = [
+            'type'    => 'Label',
+            'caption' => ' '
         ];
 
         //Test center
-        $form['actions'][] = [
-            'type'    => 'ExpansionPanel',
-            'caption' => 'Schaltfunktionen',
-            'items'   => [
-                [
-                    'type' => 'TestCenter',
-                ]
-            ]
-        ];
+        $form['actions'][] =
+            [
+                'type' => 'TestCenter'
+            ];
+
+        $form['actions'][] =
+            [
+                'type'    => 'Label',
+                'caption' => ' '
+            ];
 
         //Registered references
         $registeredReferences = [];
@@ -284,44 +332,6 @@ trait MA_Config
                 'Name'     => $name,
                 'rowColor' => $rowColor];
         }
-
-        $form['actions'][] = [
-            'type'    => 'ExpansionPanel',
-            'caption' => 'Registrierte Referenzen',
-            'items'   => [
-                [
-                    'type'     => 'List',
-                    'name'     => 'RegisteredReferences',
-                    'rowCount' => 10,
-                    'sort'     => [
-                        'column'    => 'ObjectID',
-                        'direction' => 'ascending'
-                    ],
-                    'columns' => [
-                        [
-                            'caption' => 'ID',
-                            'name'    => 'ObjectID',
-                            'width'   => '150px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
-                        ],
-                        [
-                            'caption' => 'Name',
-                            'name'    => 'Name',
-                            'width'   => '300px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
-                        ]
-                    ],
-                    'values' => $registeredReferences
-                ],
-                [
-                    'type'     => 'OpenObjectButton',
-                    'name'     => 'RegisteredReferencesConfigurationButton',
-                    'caption'  => 'Aufrufen',
-                    'visible'  => false,
-                    'objectID' => 0
-                ]
-            ]
-        ];
 
         //Registered messages
         $registeredMessages = [];
@@ -353,13 +363,51 @@ trait MA_Config
                 'rowColor'           => $rowColor];
         }
 
+        //Developer area
         $form['actions'][] = [
             'type'    => 'ExpansionPanel',
-            'caption' => 'Registrierte Nachrichten',
+            'caption' => 'Entwicklerbereich',
             'items'   => [
                 [
                     'type'     => 'List',
+                    'name'     => 'RegisteredReferences',
+                    'caption'  => 'Registrierte Referenzen',
+                    'rowCount' => 10,
+                    'sort'     => [
+                        'column'    => 'ObjectID',
+                        'direction' => 'ascending'
+                    ],
+                    'columns' => [
+                        [
+                            'caption' => 'ID',
+                            'name'    => 'ObjectID',
+                            'width'   => '150px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Name',
+                            'name'    => 'Name',
+                            'width'   => '300px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                        ]
+                    ],
+                    'values' => $registeredReferences
+                ],
+                [
+                    'type'     => 'OpenObjectButton',
+                    'name'     => 'RegisteredReferencesConfigurationButton',
+                    'caption'  => 'Aufrufen',
+                    'visible'  => false,
+                    'objectID' => 0
+                ],
+                [
+                    'type'    => 'Label',
+                    'caption' => ' '
+                ],
+                [
+                    'type'     => 'List',
                     'name'     => 'RegisteredMessages',
+                    'caption'  => 'Registrierte Nachrichten',
                     'rowCount' => 10,
                     'sort'     => [
                         'column'    => 'ObjectID',
@@ -401,51 +449,46 @@ trait MA_Config
             ]
         ];
 
-        //Send message
-        $form['actions'][4] = [
-            'type'    => 'Label',
-            'caption' => ' '
-        ];
-
-        $form['actions'][5] = [
-            'type'    => 'ValidationTextBox',
-            'name'    => 'Subject',
-            'caption' => 'Betreff'
-        ];
-
-        $form['actions'][6] = [
-            'type'    => 'ValidationTextBox',
-            'name'    => 'Text',
-            'caption' => 'Nachricht'
-        ];
-
-        $form['actions'][7] = [
-            'type'    => 'Button',
-            'caption' => 'Nachricht senden',
-            'onClick' => self::MODULE_PREFIX . '_SendMessage($id, $Subject, $Text); echo "Funktion wurde ausgeführt!";'
-        ];
+        //Dummy info message
+        $form['actions'][] =
+            [
+                'type'    => 'PopupAlert',
+                'name'    => 'InfoMessage',
+                'visible' => false,
+                'popup'   => [
+                    'closeCaption' => 'OK',
+                    'items'        => [
+                        [
+                            'type'    => 'Label',
+                            'name'    => 'InfoMessageLabel',
+                            'caption' => '',
+                            'visible' => true
+                        ]
+                    ]
+                ]
+            ];
 
         ########## Status
 
         $form['status'][] = [
             'code'    => 101,
             'icon'    => 'active',
-            'caption' => self::MODULE_NAME . ' wird erstellt',
+            'caption' => $module['ModuleName'] . ' wird erstellt',
         ];
         $form['status'][] = [
             'code'    => 102,
             'icon'    => 'active',
-            'caption' => self::MODULE_NAME . ' ist aktiv',
+            'caption' => $module['ModuleName'] . ' ist aktiv',
         ];
         $form['status'][] = [
             'code'    => 103,
             'icon'    => 'active',
-            'caption' => self::MODULE_NAME . ' wird gelöscht',
+            'caption' => $module['ModuleName'] . ' wird gelöscht',
         ];
         $form['status'][] = [
             'code'    => 104,
             'icon'    => 'inactive',
-            'caption' => self::MODULE_NAME . ' ist inaktiv',
+            'caption' => $module['ModuleName'] . ' ist inaktiv',
         ];
         $form['status'][] = [
             'code'    => 200,

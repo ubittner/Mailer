@@ -54,13 +54,15 @@ Externe Aktion------------->| Mailer (Modul) |
 Das Modul kann über eine externe Aktion gesteuert werden.  
 Nachfolgendes Beispiel versendet eine Nachricht an alle aktivierten Empfänger.
 
-> MA_SendMessage(12345, 'Betreff', 'Text');
+```php
+MA_SendMessage(12345, 'Betreff', 'Text');
+```
 
 ### 5. PHP-Befehlsreferenz
 
 #### 5.1 Nachricht an ***alle*** Empfänger versenden  
 
-```
+```text
 MA_SendMessage(integer INSTANCE_ID, string SUBJECT, string TEXT);
 ```
 
@@ -72,14 +74,16 @@ Der Befehl liefert keinen Rückgabewert.
 | `SUBJECT`     | Betreff der Nachricht         |
 | `TEXT`        | Text der Nachricht            |
 
-Beispiel:  
-> MA_SendMessage(12345, 'Hinweis', 'Dies ist eine Nachricht');  
+**Beispiel**:  
+```php
+MA_SendMessage(12345, 'Hinweis', 'Dies ist eine Nachricht');  
+```
 
 ---
 
 #### 5.2 Nachricht an ***einen*** Empfänger versenden
 
-```
+```text
 MA_SendMessageEx(integer INSTANCE_ID, string SUBJECT, string TEXT, string ADDRESS);
 ```
 
@@ -92,7 +96,9 @@ Der Befehl liefert keinen Rückgabewert.
 | `TEXT`        | Text der Nachricht            |
 | `ADDRESS`     | E-Mail-Adresse des Empfängers |
 
-Beispiel:  
-> MA_SendMessageEx(12345, 'Hinweis', 'Dies ist eine Nachricht', 'max@mustermann.de');
+**Beispiel**:  
+```php
+MA_SendMessageEx(12345, 'Hinweis', 'Dies ist eine Nachricht', 'max@mustermann.de');
+```
 
 ---

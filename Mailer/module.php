@@ -23,6 +23,8 @@ class Mailer extends IPSModule
     use MA_Notification;
 
     //Constants
+    private const LIBRARY_GUID = '{9B229E71-4D0F-E386-330F-1AC86B01BE18}';
+    private const MODULE_GUID = '{C6CF3C5C-E97B-97AB-ADA2-E834976C6A92}';
     private const MODULE_NAME = 'Mailer';
     private const MODULE_PREFIX = 'MA';
     private const MODULE_VERSION = '7.0-1, 08.09.2022';
@@ -71,7 +73,7 @@ class Mailer extends IPSModule
 
         //Register reference
         $id = $this->ReadPropertyInteger('SMTP');
-        if ($id > 1 && @IPS_ObjectExists($id)) { //0 = main category, 1 = none
+        if ($id > 1 && @IPS_ObjectExists($id)) {
             $this->RegisterReference($id);
         }
 
@@ -98,10 +100,18 @@ class Mailer extends IPSModule
         $id = @IPS_CreateInstance(self::SMTP_MODULE_GUID);
         if (is_int($id)) {
             IPS_SetName($id, 'E-Mail, Send (SMTP)');
-            echo 'Instanz mit der ID ' . $id . ' wurde erfolgreich erstellt!';
+            $infoText = 'Instanz mit der ID ' . $id . ' wurde erfolgreich erstellt!';
         } else {
-            echo 'Instanz konnte nicht erstellt werden!';
+            $infoText = 'Instanz konnte nicht erstellt werden!';
         }
+        $this->UpdateFormField('InfoMessage', 'visible', true);
+        $this->UpdateFormField('InfoMessageLabel', 'caption', $infoText);
+    }
+
+    public function UIShowMessage(string $Message): void
+    {
+        $this->UpdateFormField('InfoMessage', 'visible', true);
+        $this->UpdateFormField('InfoMessageLabel', 'caption', $Message);
     }
 
     #################### Request Action
