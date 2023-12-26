@@ -1,14 +1,14 @@
 <?php
 
 /**
- * @project       Mailer/Mailer
+ * @project       Mailer/Mailer/helper/
  * @file          MA_Notification.php
  * @author        Ulrich Bittner
- * @copyright     2022 Ulrich Bittner
+ * @copyright     2023 Ulrich Bittner
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  */
 
-/** @noinspection PhpUnused */
+/** @noinspection SpellCheckingInspection */
 
 declare(strict_types=1);
 

@@ -1,18 +1,18 @@
 <?php
 
 /**
- * @project       Mailer/Mailer
+ * @project       Mailer/Mailer/helper/
  * @file          MA_Config.php
  * @author        Ulrich Bittner
- * @copyright     2022 Ulrich Bittner
+ * @copyright     2023 Ulrich Bittner
  * @license       https://creativecommons.org/licenses/by-nc-sa/4.0/ CC BY-NC-SA 4.0
  */
 
-/** @noinspection PhpUnused */
+/** @noinspection SpellCheckingInspection */
 
 declare(strict_types=1);
 
-trait MA_Config
+trait MA_ConfigurationForm
 {
     /**
      * Reloads the configuration form.
@@ -201,21 +201,6 @@ trait MA_Config
             ]
         ];
 
-        //Recipient list
-        $recipientValues = [];
-        $recipients = json_decode($this->ReadPropertyString('RecipientList'), true);
-        foreach ($recipients as $recipient) {
-            $rowColor = '#C0FFC0'; //light green
-            if (!$recipient['Use']) {
-                $rowColor = '#DFDFDF'; //grey
-            }
-            $address = $recipient['Address'];
-            if (empty($address) || strlen($address) < 6) {
-                $rowColor = '#FFC0C0'; //red
-            }
-            $recipientValues[] = ['rowColor' => $rowColor];
-        }
-
         $form['elements'][] = [
             'type'    => 'ExpansionPanel',
             'name'    => 'Panel3',
@@ -225,7 +210,7 @@ trait MA_Config
                     'type'     => 'List',
                     'name'     => 'RecipientList',
                     'caption'  => 'Empfänger',
-                    'rowCount' => 5,
+                    'rowCount' => $this->GetRowCount('RecipientList'),
                     'add'      => true,
                     'delete'   => true,
                     'columns'  => [
@@ -241,7 +226,7 @@ trait MA_Config
                         [
                             'caption' => 'Empfänger',
                             'name'    => 'Name',
-                            'width'   => '350px',
+                            'width'   => '400px',
                             'add'     => '',
                             'edit'    => [
                                 'type' => 'ValidationTextBox'
@@ -257,7 +242,7 @@ trait MA_Config
                             ]
                         ]
                     ],
-                    'values' => $recipientValues
+                    'values' => $this->GetRowColors('RecipientList')
                 ]
             ]
         ];
@@ -305,6 +290,12 @@ trait MA_Config
             'caption' => ' '
         ];
 
+        $form['actions'][] =
+            [
+                'type'    => 'Label',
+                'caption' => 'Schaltelemente'
+            ];
+
         //Test center
         $form['actions'][] =
             [
@@ -320,27 +311,40 @@ trait MA_Config
         //Registered references
         $registeredReferences = [];
         $references = $this->GetReferenceList();
+        $amountReferences = count($references);
+        if ($amountReferences == 0) {
+            $amountReferences = 3;
+        }
         foreach ($references as $reference) {
             $name = 'Objekt #' . $reference . ' existiert nicht';
+            $location = '';
             $rowColor = '#FFC0C0'; //red
             if (@IPS_ObjectExists($reference)) {
                 $name = IPS_GetName($reference);
+                $location = IPS_GetLocation($reference);
                 $rowColor = '#C0FFC0'; //light green
             }
             $registeredReferences[] = [
-                'ObjectID' => $reference,
-                'Name'     => $name,
-                'rowColor' => $rowColor];
+                'ObjectID'         => $reference,
+                'Name'             => $name,
+                'VariableLocation' => $location,
+                'rowColor'         => $rowColor];
         }
 
         //Registered messages
         $registeredMessages = [];
         $messages = $this->GetMessageList();
+        $amountMessages = count($messages);
+        if ($amountMessages == 0) {
+            $amountMessages = 3;
+        }
         foreach ($messages as $id => $messageID) {
             $name = 'Objekt #' . $id . ' existiert nicht';
+            $location = '';
             $rowColor = '#FFC0C0'; //red
             if (@IPS_ObjectExists($id)) {
                 $name = IPS_GetName($id);
+                $location = IPS_GetLocation($id);
                 $rowColor = '#C0FFC0'; //light green
             }
             switch ($messageID) {
@@ -358,6 +362,7 @@ trait MA_Config
             $registeredMessages[] = [
                 'ObjectID'           => $id,
                 'Name'               => $name,
+                'VariableLocation'   => $location,
                 'MessageID'          => $messageID,
                 'MessageDescription' => $messageDescription,
                 'rowColor'           => $rowColor];
@@ -369,10 +374,15 @@ trait MA_Config
             'caption' => 'Entwicklerbereich',
             'items'   => [
                 [
+                    'type'    => 'Label',
+                    'caption' => 'Registrierte Referenzen',
+                    'bold'    => true,
+                    'italic'  => true
+                ],
+                [
                     'type'     => 'List',
                     'name'     => 'RegisteredReferences',
-                    'caption'  => 'Registrierte Referenzen',
-                    'rowCount' => 10,
+                    'rowCount' => $amountReferences,
                     'sort'     => [
                         'column'    => 'ObjectID',
                         'direction' => 'ascending'
@@ -382,13 +392,17 @@ trait MA_Config
                             'caption' => 'ID',
                             'name'    => 'ObjectID',
                             'width'   => '150px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " bearbeiten", $RegisteredReferences["ObjectID"]);'
                         ],
                         [
                             'caption' => 'Name',
                             'name'    => 'Name',
                             'width'   => '300px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Objektbaum',
+                            'name'    => 'VariableLocation',
+                            'width'   => '700px'
                         ]
                     ],
                     'values' => $registeredReferences
@@ -396,7 +410,7 @@ trait MA_Config
                 [
                     'type'     => 'OpenObjectButton',
                     'name'     => 'RegisteredReferencesConfigurationButton',
-                    'caption'  => 'Aufrufen',
+                    'caption'  => 'Bearbeiten',
                     'visible'  => false,
                     'objectID' => 0
                 ],
@@ -405,10 +419,15 @@ trait MA_Config
                     'caption' => ' '
                 ],
                 [
+                    'type'    => 'Label',
+                    'caption' => 'Registrierte Nachrichten',
+                    'bold'    => true,
+                    'italic'  => true
+                ],
+                [
                     'type'     => 'List',
                     'name'     => 'RegisteredMessages',
-                    'caption'  => 'Registrierte Nachrichten',
-                    'rowCount' => 10,
+                    'rowCount' => $amountMessages,
                     'sort'     => [
                         'column'    => 'ObjectID',
                         'direction' => 'ascending'
@@ -418,13 +437,17 @@ trait MA_Config
                             'caption' => 'ID',
                             'name'    => 'ObjectID',
                             'width'   => '150px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredMessagesConfigurationButton", "ID " . $RegisteredMessages["ObjectID"] . " aufrufen", $RegisteredMessages["ObjectID"]);'
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredMessagesConfigurationButton", "ID " . $RegisteredMessages["ObjectID"] . " bearbeiten", $RegisteredMessages["ObjectID"]);'
                         ],
                         [
                             'caption' => 'Name',
                             'name'    => 'Name',
                             'width'   => '300px',
-                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredMessagesConfigurationButton", "ID " . $RegisteredMessages["ObjectID"] . " aufrufen", $RegisteredMessages["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Objektbaum',
+                            'name'    => 'VariableLocation',
+                            'width'   => '700px'
                         ],
                         [
                             'caption' => 'Nachrichten ID',
@@ -442,7 +465,7 @@ trait MA_Config
                 [
                     'type'     => 'OpenObjectButton',
                     'name'     => 'RegisteredMessagesConfigurationButton',
-                    'caption'  => 'Aufrufen',
+                    'caption'  => 'Bearbeiten',
                     'visible'  => false,
                     'objectID' => 0
                 ]
@@ -497,5 +520,49 @@ trait MA_Config
         ];
 
         return json_encode($form);
+    }
+
+    ######### Private
+
+    /**
+     * Gets the amount of rows of a list.
+     *
+     * @param string $ListName
+     * @return int
+     * @throws Exception
+     */
+    private function GetRowCount(string $ListName): int
+    {
+        $elements = json_decode($this->ReadPropertyString($ListName), true);
+        $amountRows = count($elements) + 1;
+        if ($amountRows == 1) {
+            $amountRows = 3;
+        }
+        return $amountRows;
+    }
+
+    /**
+     * Gets the color for all rows of a list.
+     *
+     * @param string $ListName
+     * @return array
+     * @throws Exception
+     */
+    private function GetRowColors(string $ListName): array
+    {
+        $values = [];
+        $elements = json_decode($this->ReadPropertyString($ListName), true);
+        foreach ($elements as $element) {
+            $rowColor = '#C0FFC0'; //light green
+            if (!$element['Use']) {
+                $rowColor = '#DFDFDF'; //grey
+            }
+            $address = $element['Address'];
+            if (empty($address) || strlen($address) < 6) {
+                $rowColor = '#FFC0C0'; //red
+            }
+            $values[] = ['rowColor' => $rowColor];
+        }
+        return $values;
     }
 }
